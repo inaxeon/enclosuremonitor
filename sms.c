@@ -24,7 +24,6 @@
 #include <string.h>
 #include <avr/pgmspace.h>
 
-
 #include "config.h"
 #include "timeout.h"
 #include "smshistory.h"
@@ -47,9 +46,6 @@
 #define SMS_STATE_START_SENDALL              11
 #define SMS_STATE_SENDALL                    12
 
-#define SMS_NEXT_SEND_NONE                   0
-#define SMS_NEXT_SEND_ALL                    1
-
 #define MAX_UNREAD                           16
 
 #define SMS_POLL_INTERVAL                    3000
@@ -57,8 +53,6 @@
 typedef struct
 {
     uint8_t state;
-    uint8_t next_send_state;
-    uint8_t next_single_recipient;
     char buffer[MAX_SMS];
     bool perform_reset;
     uint8_t pos;
@@ -93,8 +87,6 @@ void sms_init(sys_config_t *config)
     st->state = SMS_STATE_INIT;
     st->read_timer_handle = -1;
     st->perform_reset = false;
-    st->next_send_state = SMS_NEXT_SEND_NONE;
-    st->next_single_recipient = 0;
     st->config = config;
     st->sendall_buffer = NULL;
 
