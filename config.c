@@ -35,6 +35,7 @@
 #include "ds18x20.h"
 #include "i2c.h"
 #include "adc.h"
+#include "gsm.h"
 
 #define CMD_NONE              0x00
 #define CMD_READLINE          0x01
@@ -84,10 +85,10 @@ static int8_t get_line(char *str, int8_t max, uint8_t *ignore_lf);
 static bool parse_param(void *param, uint8_t type, char *arg);
 static void temp_sensor_prompt(tempsensor_config_t *sensorconfig, uint8_t num);
 static void sms_recipient_prompt(recipient_config_t *sensorconfig, uint8_t num);
-static void do_show_sms_recipient(recipient_config_t *recipientconfig, bool sms);
+static void do_show_sms_recipient(recipient_config_t *recipientconfig, int8_t index, bool sms);
 static void default_sms_recipient(recipient_config_t *recipientconfig);
 static int8_t sms_recipient_prompt_handler(char *text, recipient_config_t *recipientconfig, bool sms, bool *needs_save);
-static void do_show_temp_sensor(tempsensor_config_t *sensorconfig, bool sms);
+static void do_show_temp_sensor(tempsensor_config_t *sensorconfig, int8_t index, bool sms);
 static void default_tempsensor(tempsensor_config_t *sensorconfig);
 static int8_t temp_sensor_prompt_handler(char *text, tempsensor_config_t *sensorconfig, bool sms, bool *needs_save);
 static void save_configuration(sys_config_t *config);
@@ -357,9 +358,12 @@ int8_t configuration_prompt_handler(char *text, sys_config_t *config, bool sms)
         return 0;
     }
     else if (!stricmp(command, "default")) {
+
+        if (sms)
+            return 1;
+
         default_configuration(config);
         printf("\r\nDefault configuration loaded.\r\n\r\n");
-        needs_save = true;
         return 0;
     }
     else if (!stricmp(command, "reset")) {
@@ -375,11 +379,16 @@ int8_t configuration_prompt_handler(char *text, sys_config_t *config, bool sms)
         return -1;
     }
     else if (!stricmp(command, "show")) {
-
+        uint8_t i;
         if (sms)
             return 1;
 
         do_show(config);
+
+        for (i = 0; i < MAX_RECIPIENTS; i++)
+            do_show_sms_recipient(&config->sms_recipients[i], i, false);
+        for (i = 0; i < MAX_SENSORS; i++)
+            do_show_temp_sensor(&config->temp_sensors[i], i, false);
     }
     else if ((!stricmp(command, "help") || !stricmp(command, "?"))) {
 
@@ -486,7 +495,7 @@ static int8_t sms_recipient_prompt_handler(char *text, recipient_config_t *recip
         *needs_save = true;
     }
     else if (!stricmp(command, "show")) {
-        do_show_sms_recipient(recipientconfig, sms);
+        do_show_sms_recipient(recipientconfig, -1, sms);
         return 0;
     }
     else if ((!stricmp(command, "help") || !stricmp(command, "?"))) {
@@ -511,12 +520,16 @@ static int8_t sms_recipient_prompt_handler(char *text, recipient_config_t *recip
     return 0;
 }
 
-static void do_show_sms_recipient(recipient_config_t *recipientconfig, bool sms)
+static void do_show_sms_recipient(recipient_config_t *recipientconfig, int8_t index, bool sms)
 {
     if (!sms)
     {
+        if (index < 0)
+            printf("\r\nSMS Recipient parameters:\r\n\r\n");
+        else
+            printf("SMS Recipient %u:\r\n", index + 1);
+
         printf(
-            "\r\nSMS Recipient parameters:\r\n\r\n"
             "\tnumber ...............: %s\r\n"
             "\tnotify ...............: %u\r\n"
             "\tadmin ................: %u\r\n\r\n",
@@ -602,7 +615,7 @@ static int8_t temp_sensor_prompt_handler(char *text, tempsensor_config_t *sensor
         *needs_save = true;
     }
     else if (!stricmp(command, "show")) {
-        do_show_temp_sensor(sensorconfig, sms);
+        do_show_temp_sensor(sensorconfig, -1, sms);
         return 0;
     }
     else if ((!stricmp(command, "help") || !stricmp(command, "?"))) {
@@ -627,7 +640,7 @@ static int8_t temp_sensor_prompt_handler(char *text, tempsensor_config_t *sensor
     return 0;
 }
 
-static void do_show_temp_sensor(tempsensor_config_t *sensorconfig, bool sms)
+static void do_show_temp_sensor(tempsensor_config_t *sensorconfig, int8_t index, bool sms)
 {
     char low_threshold_buf[MAX_FDP];
     char high_threshold_buf[MAX_FDP];
@@ -637,8 +650,12 @@ static void do_show_temp_sensor(tempsensor_config_t *sensorconfig, bool sms)
 
     if (!sms)
     {
+        if (index < 0)
+            printf("\r\nTemperature sensor parameters:\r\n\r\n");
+        else
+            printf("Temperature sensor %u:\r\n", index + 1);
+
         printf(
-            "\r\nTemperature sensor parameters:\r\n\r\n"
             "\tname .................: %s\r\n"
             "\tnotify ...............: %u\r\n"
             "\tlowthreshold .........: %s\r\n"
@@ -869,7 +886,12 @@ static void do_battery(bool sms)
 
 static void do_modem(void)
 {
-    printf("\r\nPress <Esc> at any time to return to configuration prompt\r\n\r\n");
+    printf(
+        "\r\nPress <Esc> at any time to return to configuration prompt\r\n"
+        "Allow a few seconds for modem to boot\r\n"
+    );
+
+    gsm_init(NULL);
 
     for (;;)
     {

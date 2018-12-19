@@ -31,20 +31,17 @@
 #include "usart.h"
 #include "util.h"
 
-typedef enum
-{
-    GSM_STATE_INIT,
-    GSM_STATE_READY, // 1
-    GSM_STATE_AWAIT_CMGF, // 2
-    GSM_STATE_AWAIT_ATE0, // 3
-    GSM_STATE_AWAIT_SEND_SMS_INPUT, // 4
-    GSM_STATE_AWAIT_SEND_SMS_RESPONSE, // 5
-    GSM_STATE_AWAIT_READ_SMS_META,
-    GSM_STATE_AWAIT_READ_SMS_TEXT,
-    GSM_STATE_AWAIT_READ_ALL_SMS_META, // 8
-    GSM_STATE_AWAIT_READ_ALL_SMS_TEXT,
-    GSM_STATE_AWAIT_RESPONSE,
-} gsm_state_t;
+#define GSM_STATE_INIT                        0
+#define GSM_STATE_READY                       1
+#define GSM_STATE_AWAIT_CMGF                  2
+#define GSM_STATE_AWAIT_ATE0                  3
+#define GSM_STATE_AWAIT_SEND_SMS_INPUT        4
+#define GSM_STATE_AWAIT_SEND_SMS_RESPONSE     5
+#define GSM_STATE_AWAIT_READ_SMS_META         6
+#define GSM_STATE_AWAIT_READ_SMS_TEXT         7
+#define GSM_STATE_AWAIT_READ_ALL_SMS_META     8
+#define GSM_STATE_AWAIT_READ_ALL_SMS_TEXT     9
+#define GSM_STATE_AWAIT_RESPONSE              10
 
 #define MAX_RX_BUFFER                         128
 #define MAX_SMS_BUFFER                        (MAX_SMS * 2)
@@ -115,7 +112,7 @@ void gsm_process(void)
     while (gsm_usart_data_ready())
     {
         char c = gsm_usart_get();
-        //printf("%c %d ", c, _g_gsm_state);
+
         if (_g_gsm_state == GSM_STATE_AWAIT_READ_SMS_TEXT || _g_gsm_state == GSM_STATE_AWAIT_READ_ALL_SMS_TEXT)
             gsm_fill_message_buffer(c);
         else
@@ -211,15 +208,15 @@ static void gsm_reset_message_buffer(void)
 
 static void gsm_abort_operation(void *data)
 {
-    printf("GSM: ERROR: Operation timed out\r\n");
-    gsm_finish_operation(false);
+    printf("GSM: ERROR: Operation timed out. Resetting...\r\n");
+    reset();
 }
 
 static void gsm_update_state(uint8_t newstate)
 {
     // Starting operation. Set abort timer.
     if (_g_gsm_state == GSM_STATE_READY && newstate != GSM_STATE_READY)
-        _g_abort_timer = timeout_create(60000, true, false, &gsm_abort_operation, NULL);
+        _g_abort_timer = timeout_create(120000, true, false, &gsm_abort_operation, NULL);
     
     // Operation finished. Kill abort timer.
     if (newstate == GSM_STATE_READY && _g_gsm_state != GSM_STATE_READY)
@@ -277,7 +274,8 @@ static void gsm_process_line(uint8_t state, const char *line)
         if (!strcmp_p(line, "OK"))
         {
             gsm_finish_operation(true);
-            _g_ready_callback();
+            if (_g_ready_callback)
+                _g_ready_callback();
         }
         else
         {
@@ -286,14 +284,13 @@ static void gsm_process_line(uint8_t state, const char *line)
     }
     else if (state == GSM_STATE_AWAIT_SEND_SMS_INPUT)
     {
-        printf("GSM: ERROR: Failed to start send\r\n");
+        //printf("GSM: ERROR: Failed to start send\r\n");
         // Received a full line instead of input prompt. Something went wrong.
         gsm_finish_operation(false);
     }
     else if (state == GSM_STATE_AWAIT_SEND_SMS_RESPONSE)
     {
         //printf("got: %s\r\n", line);
-
         if (!strncmp_p(line, "+CMGS:", 6))
             goto done;
 
@@ -367,7 +364,8 @@ static void gsm_process_sms(uint8_t state, char *meta, char *message)
     char *flags;
     char *from;
 
-    //printf("gsm_process_sms: '%s' '%s'\r\n", _g_receive_buffer, _g_message_buffer);    
+    //printf("gsm_process_sms: '%s' '%s'\r\n", _g_receive_buffer, _g_message_buffer);
+
     if (state == GSM_STATE_AWAIT_READ_SMS_TEXT)
     {
         uint8_t len;
@@ -394,7 +392,7 @@ static void gsm_process_sms(uint8_t state, char *meta, char *message)
     csvfield(NULL, &saveptr); /* Skip empty field */
     csvfield(NULL, &saveptr); /* Skip date */
 
-    //printf("gsm_process_sms: message: '%s' index: '%s' flags: '%s' from: '%s' date: '%s'\r\n", message, index, flags, from, date);
+    //printf("gsm_process_sms: message: '%s' index: '%s' flags: '%s' from: '%s'\r\n", message, index, flags, from);
 
     decode_ucs2(message);
 
