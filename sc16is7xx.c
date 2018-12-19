@@ -142,7 +142,7 @@ void sc16is7xx_open(uint8_t unit, uint32_t baud, uint8_t data_bits, bool parity,
 
 void sc16is7xx_put(uint8_t unit, char c)
 {
-	while ((sc16is7xx_read_reg(unit, LSR) & LSR_THRE) == 0);
+    while ((sc16is7xx_read_reg(unit, LSR) & LSR_THRE) == 0);
     sc16is7xx_write_reg(unit, THR, c);
 }
 
@@ -160,5 +160,5 @@ bool sc16is7xx_data_ready(uint8_t unit)
 
 char sc16is7xx_get(uint8_t unit)
 {
-	return sc16is7xx_read_reg(unit, RBR);
+    return sc16is7xx_read_reg(unit, RBR);
 }

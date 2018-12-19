@@ -25,6 +25,7 @@
 #define MESSAGE_TEMP_STATE        4
 #define MESSAGE_MAINS_STATE_OFF   5
 #define MESSAGE_MAINS_STATE_ON    6
+#define MESSAGE_LOW_BATTERY       7
 
 void sms_history_init(void);
 bool sms_history_lodge(uint8_t type, uint8_t index, uint16_t seconds_till_next);

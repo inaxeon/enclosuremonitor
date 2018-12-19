@@ -224,7 +224,7 @@ static void read_sensors(void *param)
                     fixedpoint_sign(rs->temp_result[i], current);
                     fixedpoint_sign(rs->config->temp_sensors[i].high_threshold, threshold);
 
-                    sprintf(_g_sms_buf, "Temperature sensor '%s' is reading above threshold: current: %s%u.%u: threshold: %s%u.%u",
+                    sprintf(_g_sms_buf, "Sensor '%s' is above threshold: current: %s%u.%u threshold: %s%u.%u",
                         rs->config->temp_sensors[i].name,
                         fixedpoint_arg(rs->temp_result[i], current),
                         fixedpoint_arg(rs->config->temp_sensors[i].high_threshold, threshold)
@@ -244,7 +244,7 @@ static void read_sensors(void *param)
                     fixedpoint_sign(rs->temp_result[i], current);
                     fixedpoint_sign(rs->config->temp_sensors[i].low_threshold, threshold);
 
-                    sprintf(_g_sms_buf, "Temperature sensor '%s' is reading below threshold: current: %s%u.%u: threshold: %s%u.%u",
+                    sprintf(_g_sms_buf, "Sensor '%s' is below threshold: current: %s%u.%u threshold: %s%u.%u",
                         rs->config->temp_sensors[i].name,
                         fixedpoint_arg(rs->temp_result[i], current),
                         fixedpoint_arg(rs->config->temp_sensors[i].low_threshold, threshold)
@@ -275,6 +275,15 @@ static void read_sensors(void *param)
         printf("No sensors\r\n");
 
     battery_voltage = adc_read_battery();
+
+    if (battery_voltage < BATTERY_VOLTAGE_LOW_THRESHOLD)
+    {
+        if (sms_can_send_message())
+        {
+            strcpy(_g_sms_buf, "Low battery alert");
+            sms_try_send(MESSAGE_LOW_BATTERY, 0, _g_sms_buf);
+        }
+    }
 
     printf("Mains frequency ...........: %u\r\n", rs->mains_result);
     printf("Battery voltage ...........: %u.%02u\r\n", fixedpoint_arg_u_2dp(battery_voltage));

@@ -34,6 +34,7 @@
 #include "onewire.h"
 #include "ds18x20.h"
 #include "i2c.h"
+#include "adc.h"
 
 #define CMD_NONE              0x00
 #define CMD_READLINE          0x01
@@ -96,6 +97,7 @@ static bool do_i2c_read_reg16(char *args);
 static bool do_i2c_read_buf(char *args);
 static bool do_i2c_write_reg(char *args);
 static bool do_i2c_write_reg16(char *args);
+static void do_battery(bool sms);
 static void do_modem(void);
 static void do_readtemp(void);
 
@@ -191,6 +193,8 @@ static void do_help(void)
         "\ti2cwritereg [devaddr(h)] [reg(h)] [data]\r\n"
         "\ti2cwritereg16 [devaddr(h)] [reg(h)] [data(h16)]\r\n"
         "\t\tRead and write to I2C devices\r\n\r\n"
+        "\tbattery\r\n"
+        "\t\tShow battery voltage\r\n\r\n"
         "\tmodem\r\n"
         "\t\tConnect this terminal to GSM modem for manual command entry\r\n\r\n"
         "\treadtemp\r\n"
@@ -314,6 +318,9 @@ int8_t configuration_prompt_handler(char *text, sys_config_t *config, bool sms)
             return 1;
 
         do_readtemp();
+    }
+    else if (!stricmp(command, "battery")) {
+        do_battery(sms);
     }
     else if (!stricmp(command, "modem")) {
         do_modem();
@@ -848,6 +855,16 @@ static bool do_i2c_write_reg16(char *args)
 badparam:
     printf("Error: Bad parameter\r\n");
     return false;
+}
+
+static void do_battery(bool sms)
+{
+    uint16_t battery_voltage = adc_read_battery();
+
+    if (!sms)
+        printf("\r\nBattery voltage: %u.%02u\r\n\r\n", fixedpoint_arg_u_2dp(battery_voltage));
+    else
+        sms_respond_to_source("Battery: %u.%02u V\n(Full: 4.15 V)\n(Empty: 3.20 V)", fixedpoint_arg_u_2dp(battery_voltage));
 }
 
 static void do_modem(void)
