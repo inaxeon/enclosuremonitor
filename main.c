@@ -45,7 +45,7 @@
 #include "smshistory.h"
 
 char _g_dotBuf[MAX_DESC];
-char _g_sms_buf[MAX_SMS];
+char _g_sms_buf[MAX_SMS + 1];
 
 typedef struct
 {
@@ -384,7 +384,7 @@ void status_response(char *sendbuffer)
             sprintf(buf, "%s: Unknown\n", desc);
         }
 
-        if ((strlen(sendbuffer) + strlen(buf)) > (MAX_SMS - 1))
+        if ((strlen(sendbuffer) + strlen(buf)) >= (MAX_SMS))
             return;
 
         strcat(sendbuffer, buf);
@@ -392,7 +392,7 @@ void status_response(char *sendbuffer)
 
     sprintf(buf, "Power: %s", rs->mains_result > 0 ? "On" : "Off");
 
-    if ((strlen(sendbuffer) + strlen(buf)) > (MAX_SMS - 1))
+    if ((strlen(sendbuffer) + strlen(buf)) >= (MAX_SMS))
         return;
 
     strcat(sendbuffer, buf);

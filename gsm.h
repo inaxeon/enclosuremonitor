@@ -19,7 +19,7 @@
 #ifndef __GSM_H__
 #define __GSM_H__
 
-#define MAX_SMS (160 + 1)
+#define MAX_SMS 160
 
 typedef struct
 {

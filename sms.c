@@ -53,7 +53,7 @@
 typedef struct
 {
     uint8_t state;
-    char buffer[MAX_SMS];
+    char buffer[MAX_SMS + 1];
     bool perform_reset;
     uint8_t pos;
     uint8_t pos_processing;
