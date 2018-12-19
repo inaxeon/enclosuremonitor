@@ -167,8 +167,8 @@ void configuration_bootprompt(sys_config_t *config)
 static void do_show(sys_config_t *config)
 {
     printf("\r\nCurrent configuration:\r\n\r\n"
-            "\tresenddelay ...........: %u\r\n"
-            "\texpectedsensors .......: %u\r\n",
+            "\tresenddelay ..........: %u\r\n"
+            "\texpectedsensors ......: %u\r\n",
             config->resend_delay,
             config->expected_sensors
         );

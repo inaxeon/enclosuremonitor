@@ -44,17 +44,17 @@ uint16_t adc_read(uint8_t samples, uint16_t scale_amount)
     uint32_t average;
     uint8_t i;
 
-	average = 0;
-		
-	for (i = 0; i < samples; i++)
-	{
+    average = 0;
+        
+    for (i = 0; i < samples; i++)
+    {
         _delay_ms(1);
         ADCSRA |= _BV(ADSC);
         while (ADCSRA & _BV(ADSC));
         average += ADC;
     }
 
-	average /= samples;
+    average /= samples;
     average *= SCALE_FACTOR;
     average /= scale_amount;
 
