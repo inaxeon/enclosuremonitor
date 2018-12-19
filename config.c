@@ -267,7 +267,7 @@ int8_t configuration_prompt_handler(char *text, sys_config_t *config, bool sms)
             return 1;
         needs_save = true;
     }
-    if (!stricmp(command, "expectedsensors")) {
+    else if (!stricmp(command, "expectedsensors")) {
         if (!parse_param(&config->expected_sensors, PARAM_U8_SIDX, arg))
             return 1;
         needs_save = true;
