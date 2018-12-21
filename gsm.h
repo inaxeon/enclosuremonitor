@@ -32,7 +32,7 @@ typedef struct
 {
     void *data;
     void (*fail_callback)(void *data);
-    void (*success_callback)(void *data, int16_t index, const char *from, const char *status, char *message);
+    void (*success_callback)(void *data, int16_t index, const char *from, const char *status, const char *message);
     void (*endofmessages_callback)(void *data);
 } gsm_readsms_cb_t;
 

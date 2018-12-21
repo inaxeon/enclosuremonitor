@@ -71,7 +71,7 @@ static void sms_gsm_ready(void);
 static void sms_send_buffer(sms_state_t *st);
 static void sms_send_message_success(void *param);
 static void sms_send_message_fail(void *param);
-static void sms_read_message_success(void *data, int16_t index, const char *from, const char *status, char *message);
+static void sms_read_message_success(void *data, int16_t index, const char *from, const char *status, const char *message);
 static void sms_read_message_fail(void *data);
 static void sms_read_messages_complete(void *data);
 static void sms_delete_message_success(void *data);
@@ -319,7 +319,7 @@ static void sms_send_message_fail(void *data)
     }
 }
 
-static void sms_read_message_success(void *data, int16_t index, const char *from, const char *status, char *message)
+static void sms_read_message_success(void *data, int16_t index, const char *from, const char *status, const char *message)
 {
     sms_state_t *st = (sms_state_t *)data;
 
