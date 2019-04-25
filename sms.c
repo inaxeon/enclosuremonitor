@@ -178,9 +178,9 @@ void sms_process(void)
                 {
                     if (!stricmp(st->buffer, "reset"))
                     {
+                        st->state = SMS_STATE_CMD_EXEC;
                         sms_respond_to_source("Reset has been scheduled");
                         st->perform_reset = true;
-                        st->state = SMS_STATE_CMD_AWAIT_DELETE;
                     }
                     else
                     {
